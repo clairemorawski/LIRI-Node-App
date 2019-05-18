@@ -10,9 +10,13 @@ You should type the next commands to see the result enclosed in parentheses:
   -This will show the following information about the song in your terminal/bash window:
 
    Artist Name
+
    Song Name
+
    Spotify URL
+
    Album Name
+
 
   -If no song is provided then your program will default to "Go Your Own Way" by Fleetwood Mac
 
@@ -21,12 +25,20 @@ You should type the next commands to see the result enclosed in parentheses:
   -This will show the following information about the movie in your terminal/bash window:
 
    Movie Title
+
    Release Year
+
    IMDB Rating
+
    Rotten Tomatoes
+
    Country Movie was Produced in
+
    Language
+
    Plot
+
    Actors
+
 
   -If no movie is provided then your program will default to "Mr. Nobody"
