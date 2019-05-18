@@ -1,108 +1,172 @@
 //Read & Set Environment Variables
-require("dotenv").config();
-
+require('dotenv').config();
+//Dependencies
 var fs = require('fs');
-var keys = require("./keys");
+var keys = require('./keys');
 
 //Create Spotify Variable
-var Spotify = require("node-spotify-api");
-var spotify = new Spotify(keys.spotify);
-//prints spotify client id to console
-console.log(process.env.SPOTIFY_ID);
-//prints spotify client password to console
-console.log(process.env.SPOTIFY_SECRET);
+//spotfiy=constructor/class
+var Spotify = require('node-spotify-api');
+//request api
+var request = require('request');
+//var spotify = new Spotify(keys.spotify);
+//Request:
+var nodeArgs = process.argv;
+//Action
+var action = process.argv[2];
 
-var action = process.argv[2].toLowerCase();
-var request = (process.argv.slice(3).join("+")).toLowerCase();
-
-
-var omdbKey = keys.omdb.api_key;
-
-//Command: spotify-this-song
-var spotifyThisSong = function (song) {
-    //Default: "Go Your Own Way" by Fleetwood Mac
-    if (!song) {
-        song = "Go Your Own Way"
-    }
-    var spotify = new Spotify(keys.spotify);
-
-    spotify.search({ type: 'track', query: song, limit: 1 }, function (err, data) {
-        if (err) {
-            return console.log(err)
-        }
-        var songInfo = data.tracks.items[0]
-        outputData(songInfo.artists[0].name)
-        outputData(songInfo.name)
-        outputData(songInfo.preview_url)
-        outputData(songInfo.album.name)
-    })
+//LOGIC
+if (action === 'spotify-this-song') {
+    //run spotify function
+    runSpotify();
+} else if (action === 'movie-this') {
+    //run omdb function
+    runOMDB();
+} else if (action === 'do-what-it-says') {
+    //run function
+    runTxt();
 }
 
-//Command: movie-this
-var movieThis = function (movie) {
-    //Default: Beauty & The Beast
-    if (!movie) {
-        movie = "Beauty & The Beast"
+//grab input from user with a function
+function getInput() {
+    //run for-loop to grab all elements after 3rd place in array
+    var input = '';
+    for (var i = 3; i < nodeArgs.length; i++) {
+        input += process.argv[i] + ' ';
     }
+    return input;
+}
 
-    var queryURL = "http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&apikey=trilogy";
+function runSpotify(randomTextContent) {
+    //get spotify keys
+    var sKeys = keys.spotify;
+    var spotify = new Spotify(sKeys);
+    var input;
+    if (!randomTextContent) {
+        input = getInput();
+    } else {
+        input = randomTextContent;
+    }
+    //prints input to console
+    console.log(input);
 
-    request(queryURL, function (err, response, body) {
-        if (!err && response.statusCode == 200) {
-            var movieInfo = JSON.parse(body)
-
-            outputData("Title: " + movieInfo.Title)
-            outputData("Release Year: " + movieInfo.Year)
-            outputData("IMDB Rating: " + movieInfo.imdbRating)
-            outputData("Rotten Tomatoes Rating: " + movieInfo.Ratings[1].Value)
-            outputData("Country: " + movieInfo.Country)
-            outputData("Language: " + movieInfo.Language)
-            outputData("Plot: " + movieInfo.Plot)
-            outputData("Actors: " + movieInfo.Actors)
-        } else {
-            console.log('Error occurred.')
-        } if (movie === "Beauty & The Beast") {
-            console.log("-----------------------");
-            console.log("Please watch this movie.");
-            console.log("It is a Disney Classic");
+    spotify.search({ type: 'track', query: input }, function (err, data) {
+        if (err) {
+            return console.log('Error occurred: ' + err);
         }
+
+        var songInfo =
+            'Artist Name: ' +
+            data.tracks.items[0].artists[0].name +
+            '\n' +
+            'Song Name: ' +
+            data.tracks.items[0].name +
+            '\n' +
+            'Spotify URL: ' +
+            data.tracks.items[0].external_urls.spotify +
+            '\n' +
+            'Album Name: ' + data.tracks.items[0].album.name;
+        console.log(songInfo);
+    });
+}
+
+function runOMDB(textCommand) {
+    //grab input from user with a function
+    var input = getInput();
+    var omdbKey = keys.omdb.api_key;
+    var queryUrl =
+        'http://www.omdbapi.com/?t=' + input + '&y=&plot=short&apikey=' + omdbKey;
+    if (input === '') {
+        input = 'Mr. Nobody';
     }
 
-//Command: do-what-it-says
-var doWhatItSays = function () {
-        fs.readFile('./random.txt', "utf8", function (err, data) {
+    //Ratings
+    request(queryUrl, function (error, response, body) {
+        //Rotten Tomatoes
+        if (!error && response.statusCode === 200) {
+            var rottenTomatoes = '';
+
+            var rtData = JSON.parse(body).Ratings.find(rating => rating.Source === 'Rotten Tomatoes'
+            )
+        };
+
+        if (rtData) {
+            rottenTomatoes += 'Rotten Tomatoes: ' + rtData.Value + '\n';
+        }
+
+        //Print this information about the user's input:
+        var movieInfo =
+            '\n' +
+            'Title: ' +
+            JSON.parse(body).Title +
+            '\n' +
+            'Release Year: ' +
+            JSON.parse(body).Year +
+            '\n' +
+            'IMDB Rating: ' +
+            JSON.parse(body).imdbRating +
+            '\n' +
+            rottenTomatoes +
+            'Country: ' +
+            JSON.parse(body).Country +
+            '\n' +
+            'Language: ' +
+            JSON.parse(body).Language +
+            '\n' +
+            'Plot: ' +
+            JSON.parse(body).Plot +
+            '\n' +
+            'Actors: ' +
+            JSON.parse(body).Actors +
+            '\n';
+        console.log(movieInfo);
+
+        //Bonus: append to log.txt
+        fs.appendFile('log.txt', '\n' + movieInfo + '\n', function (err) {
             if (err) {
-                return console.log(err)
+                return console.log(err);
             }
-            var dataArr = data.split(",")
-
-            runAction(dataArr[0], dataArr[1])
         });
-
-        var outputData = function (data) {
-            console.log(data)
-
-            fs.appendFile("./random.txt", "\r\n" + data, function (err) {
-                if (err) {
-                    return console.log(err)
-                }
-            })
+    }
+    )
+}
+function runTxt() {
+    fs.readFile('random.txt', 'utf8', function (err, data) {
+        if (err) {
+            return console.log(err);
         }
+        var randomTextContent = data.split(',');
 
-        var runAction = function (func, parm) {
-            switch (func) {
-                case "spotify-this-song":
-                    spotifyThisSong(parm)
-                    break
-                case "movie-this":
-                    movieThis(parm)
-                    break
-                case "do-what-it-says":
-                    doWhatItSays(parm)
-                    break
-                default:
-                    outputData("That command is not recognized. Please try again.")
-            }
+        if (randomTextContent[0] === 'spotify-this-song') {
+            //run spotify function
+            runSpotify(randomTextContent[1]);
+        } else if (randomTextContent[0] === 'movie-this') {
+            //run OMDB function
+            runOMDB(randomTextContent[1]);
         }
+    });
+}
 
-        runAction;{process.argv[2], process.argv[3]},
+        //Command: spotify-this-song
+        //var spotifyThisSong = function (song) {
+        //Default: "Go Your Own Way" by Fleetwood Mac
+        //if (!song) {
+        // song = "Go Your Own Way"
+        // }
+
+        //var runAction = function (func, parm) {
+        //  switch (func) {
+        //    case "spotify-this-song":
+        //      spotifyThisSong(parm)
+        //    break
+        //        case "movie-this":
+        //          movieThis(parm)
+        //        break
+        //       case "do-what-it-says":
+        //         doWhatItSays(parm)
+        //       break
+        // default:
+        //       outputData("That command is not recognized. Please try again.")
+        //   }
+        //}
+        //runAction(process.argv[2], process.argv[3])
