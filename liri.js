@@ -31,6 +31,9 @@ if (action === 'spotify-this-song') {
 function getInput() {
     //run for-loop to grab all elements after 3rd place in array
     var input = '';
+    //if (input === '') {
+    //input = 'Go Your Own Way';
+    // }
     for (var i = 3; i < nodeArgs.length; i++) {
         input += process.argv[i] + ' ';
     }
@@ -67,6 +70,13 @@ function runSpotify(randomTextContent) {
             '\n' +
             'Album Name: ' + data.tracks.items[0].album.name;
         console.log(songInfo);
+
+        //Bonus: append to log.txt
+        fs.appendFile('log.txt', '\n' + songInfo + '\n', function (err) {
+            if (err) {
+                return console.log(err);
+            }
+        });
     });
 }
 
@@ -87,86 +97,60 @@ function runOMDB(textCommand) {
             var rottenTomatoes = '';
 
             var rtData = JSON.parse(body).Ratings.find(rating => rating.Source === 'Rotten Tomatoes'
-            )
-        };
+            );
 
-        if (rtData) {
-            rottenTomatoes += 'Rotten Tomatoes: ' + rtData.Value + '\n';
+            if (rtData) {
+                rottenTomatoes += 'Rotten Tomatoes: ' + rtData.Value + '\n';
+            }
+
+            //Print this information about the user's input:
+            var movieInfo =
+                '\n' +
+                'Title: ' +
+                JSON.parse(body).Title +
+                '\n' +
+                'Release Year: ' +
+                JSON.parse(body).Year +
+                '\n' +
+                'IMDB Rating: ' +
+                JSON.parse(body).imdbRating +
+                '\n' +
+                rottenTomatoes +
+                'Country: ' +
+                JSON.parse(body).Country +
+                '\n' +
+                'Language: ' +
+                JSON.parse(body).Language +
+                '\n' +
+                'Plot: ' +
+                JSON.parse(body).Plot +
+                '\n' +
+                'Actors: ' +
+                JSON.parse(body).Actors +
+                '\n';
+            console.log(movieInfo);
         }
-
-        //Print this information about the user's input:
-        var movieInfo =
-            '\n' +
-            'Title: ' +
-            JSON.parse(body).Title +
-            '\n' +
-            'Release Year: ' +
-            JSON.parse(body).Year +
-            '\n' +
-            'IMDB Rating: ' +
-            JSON.parse(body).imdbRating +
-            '\n' +
-            rottenTomatoes +
-            'Country: ' +
-            JSON.parse(body).Country +
-            '\n' +
-            'Language: ' +
-            JSON.parse(body).Language +
-            '\n' +
-            'Plot: ' +
-            JSON.parse(body).Plot +
-            '\n' +
-            'Actors: ' +
-            JSON.parse(body).Actors +
-            '\n';
-        console.log(movieInfo);
-
         //Bonus: append to log.txt
         fs.appendFile('log.txt', '\n' + movieInfo + '\n', function (err) {
             if (err) {
                 return console.log(err);
             }
         });
-    }
-    )
-}
-function runTxt() {
-    fs.readFile('random.txt', 'utf8', function (err, data) {
-        if (err) {
-            return console.log(err);
-        }
-        var randomTextContent = data.split(',');
-
-        if (randomTextContent[0] === 'spotify-this-song') {
-            //run spotify function
-            runSpotify(randomTextContent[1]);
-        } else if (randomTextContent[0] === 'movie-this') {
-            //run OMDB function
-            runOMDB(randomTextContent[1]);
-        }
     });
+    function runTxt() {
+        fs.readFile('random.txt', 'utf8', function (err, data) {
+            if (err) {
+                return console.log(err);
+            }
+            var randomTextContent = data.split(',');
+
+            if (randomTextContent[0] === 'spotify-this-song') {
+                //run spotify function
+                runSpotify(randomTextContent[1]);
+            } else if (randomTextContent[0] === 'movie-this') {
+                //run OMDB function
+                runOMDB(randomTextContent[1]);
+            }
+        });
+    }
 }
-
-        //Command: spotify-this-song
-        //var spotifyThisSong = function (song) {
-        //Default: "Go Your Own Way" by Fleetwood Mac
-        //if (!song) {
-        // song = "Go Your Own Way"
-        // }
-
-        //var runAction = function (func, parm) {
-        //  switch (func) {
-        //    case "spotify-this-song":
-        //      spotifyThisSong(parm)
-        //    break
-        //        case "movie-this":
-        //          movieThis(parm)
-        //        break
-        //       case "do-what-it-says":
-        //         doWhatItSays(parm)
-        //       break
-        // default:
-        //       outputData("That command is not recognized. Please try again.")
-        //   }
-        //}
-        //runAction(process.argv[2], process.argv[3])
